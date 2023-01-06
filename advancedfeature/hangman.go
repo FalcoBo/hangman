@@ -10,11 +10,13 @@ import (
 )
 
 //-------------Générer un nombre aléatoire----------------\\
+
 func Nombres_aléatoire(min, max int) int {
 	return min + rand.Intn(max-min)
 }
 
 //-------------Transformer le mot rand en mot à deviner----------------\\
+
 func deviner(s string) string {
 	var mot []string      // EX : salut
 	var motcaché []string // EX : _ _ _ _ _
@@ -22,6 +24,7 @@ func deviner(s string) string {
 		mot = append(mot, string(u))
 		motcaché = append(motcaché, "_")
 	}
+	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < (len(mot))/2-1; i++ {
 		pos := rand.Intn(len(mot))
 		motcaché[pos] = mot[pos]
@@ -34,6 +37,7 @@ func deviner(s string) string {
 }
 
 //-------Remplacer '_' par la lettre saisie-------\\
+
 func remplace_lettre(mot string, caché string, lettresrentrée string) string {
 	var tg []rune
 	ouai := []rune(lettresrentrée)
@@ -50,18 +54,29 @@ func remplace_lettre(mot string, caché string, lettresrentrée string) string {
 	return vide
 }
 
-//--------------affiché la lettre saisie---------------\\ Va parcourir le mot et si il y a la même lettre que celle qui a été saisie à l'entrée
+//--------------LETTRE SAISIE---------------\\
+
 func Lettre_Trouvé(lettre string, word string) bool { //savoir si la lettre saisie est bien dans le mot qui est caché
 	for _, motentier := range word { // on parcours le string
-		if string(motentier) == lettre { // Si dans le string il y a la lettre on return true sinon false
+		if string(motentier) == lettre { // Si dans le string il y a la lettre ou un mot on return true sinon false
 			return true
 		}
 	}
 	return false
 }
 
-//--------------Rajouter des espaces dans le mot----------------\\ Nous permetra de comparer avec le résultat
-func rajouter_espace(bj string) string {
+//--------------MOT SAISIE---------------\\
+
+func mot_trouvé(mot_rentrée string, mot string) bool {
+	if mot_rentrée == mot {
+		return true
+	}
+	return false
+}
+
+//--------------Rajouter des espaces dans le mot----------------\\
+
+func add_space(bj string) string {
 	slice := ""
 	for a, b := range bj {
 		if a != len(bj) {
@@ -74,6 +89,7 @@ func rajouter_espace(bj string) string {
 }
 
 //--------------Toutes les lettres sont-elles dans le mot ?----------------\\
+
 func toutes_lettres(mot string, caché string) bool {
 	for _, tg := range caché {
 		tqt := 0
@@ -90,6 +106,7 @@ func toutes_lettres(mot string, caché string) bool {
 }
 
 //--------------Changer les lettres MIN en lettres MAJ (isupper)----------------\\
+
 func maj(mot string) string {
 	tqt := []rune(mot)
 	for i := range tqt {
@@ -100,7 +117,23 @@ func maj(mot string) string {
 	return string(tqt)
 }
 
+//--------------STOCKER LES LETTRES UTILISEE----------------\\
+
+func lettre_stockée(Int_user string, tab []string) bool {
+	if len(tab) == 0 { //si il n'y a pas de lettre
+		return true
+	} else { //sinon s'il y a une lettre
+		for _, w := range tab { // on parcours la lettre
+			if Int_user == string(w) { // si cette lettre est = à la lettre rentrée (si elle a déjà été uitilisé)
+				return false
+			}
+		}
+	}
+	return true
+}
+
 //--------------position du pendu en fonction des attempts----------------\\
+
 func Pendu(r int) string {
 	if r == 9 {
 		fmt.Printf("         \n")
@@ -169,7 +202,7 @@ func Pendu(r int) string {
 		fmt.Printf("  +---+\n")
 		fmt.Printf("  |   |\n")
 		fmt.Printf("  O   |\n")
-		fmt.Printf(" /|\\  |\n")
+		fmt.Printf(" /|\\ |\n")
 		fmt.Printf("      |\n")
 		fmt.Printf("      |\n")
 		fmt.Printf("=========\n")
@@ -203,13 +236,16 @@ type José struct {
 
 func main() {
 
-	//----------iINITIALISATION DES VARIABLES------------\\
+	//----------iINITIALISATION DES VARIABLES DE LA STRUCT------------\\
 
 	var g1 José
 	g1.attempts = 10
 
 	var slice []string //création d'un slice
-	//----------Choisir un mot rand à partir d'un fichier------------\\
+	var tab []string   //création d'un slice pour stockée les lettres déjà utilisés
+
+	//----------Ouvrir le fichier .txt------------\\
+
 	file, error := os.Open("words.txt") //ouverture du fichier
 	if error != nil {                   //définir l'err si il n'y a pas de fichié
 		log.Fatal(error)
@@ -220,6 +256,8 @@ func main() {
 		slice = append(slice, (fileScanner.Text()))
 	}
 
+	//----------Initialisation des variables------------\\
+
 	max := len(slice) //valeurs max et min du slice
 	min := 0
 	rand.Seed(time.Now().UnixNano())
@@ -229,36 +267,74 @@ func main() {
 	fmt.Println("GOOD LUCK, YOU HAVE 10 ATTEMPTS")
 	nar := maj(caché) //mot chaché en majuscule
 	fmt.Println(nar)
-	qz := rajouter_espace(mot)
+	qz := add_space(mot)
 	for g1.attempts != 0 || caché == qz {
 
 		//----------Scanner la lettre saisie par l'utilisateur------------\\
+
 		scan := bufio.NewScanner(os.Stdin) // Permet de scan la saisie de l'utilisateur
 		fmt.Println("CHOOSE:  ")
-		scan.Scan()                   //On scan la saisie
-		Lettre_rentrée := scan.Text() //On prend la lettre saisi pour la mettre dans une variable
-		if Lettre_Trouvé(Lettre_rentrée, mot) == true {
-			ok := remplace_lettre(qz, caché, Lettre_rentrée)
+		scan.Scan()             //On scan la saisie
+		Int_user := scan.Text() //On prend la lettre saisi pour la mettre dans une variable   //On prend le mot saisi pour la mettre dans une variable
+
+		//----------L'UTILISATEUR SAISIE UN MOT------------\\
+		if len(Int_user) != 0 {
+			if len(Int_user) > 1 {
+				abc := mot_trouvé(mot, Int_user)
+				if abc == true { //SI LE MOT SAISIE EST LE BON
+					fmt.Println("CONGRATS !")
+					fmt.Println("THE WORD WAS", maj(mot))
+					break
+				} else { // SI CE N'EST PAS LE BON
+					if g1.attempts <= 1 {
+						fmt.Println("YOU LOOSE")
+						fmt.Println("THE WORD WAS", maj(mot))
+						break
+					} else {
+						g1.attempts = g1.attempts - 2
+						fmt.Println("THIS IS THE WRONG WORD")
+					}
+				}
+
+				//----------STOCKER LES LETTRES UTILISEES------------\\
+
+			} else {
+				if len(Int_user) == 1 { //si l'intput est une seule lettre
+					ui := lettre_stockée(Int_user, tab)
+					if ui == true {
+						tab = append(tab, Int_user)
+					} else {
+						fmt.Println("ERROR, LETTER WAS ALREADY USED")
+					}
+				}
+			}
+		}
+		if Lettre_Trouvé(Int_user, mot) == true {
+			ok := remplace_lettre(qz, caché, Int_user)
 			bienb := maj(ok)
 			caché = bienb
 			fmt.Println(bienb)
 			z := maj(qz)
 			e := maj(caché)
-			if toutes_lettres(z, e) == true {
+			if toutes_lettres(z, e) == true { // Si toutes les lettres ont été trouvés
 				fmt.Println("CONGRATS !")
-				break
+				break // casse la fonction main (arrête tout)
 			} else {
 				continue
 			}
 		} else {
-			g1.attempts-- //Si il ya des err
+			if Lettre_Trouvé(Int_user, mot) == false && len(Int_user) < 2 {
+				g1.attempts-- //Si il ya des err
+			}
 			if g1.attempts > 0 {
-				fmt.Println("NOT PRESENT IN THE WORD, ", g1.attempts, "ATTEMPTS REMAINING")
+				fmt.Println("THE LETTER IS NOT IN THE WORD :", g1.attempts, "REMAINING") // S'il reste encore des essais
 			} else {
 				fmt.Println("YOU LOOSE")
+				MOT := maj(mot)
+				fmt.Println("THE WORD WAS :", MOT)
 			}
 			g := Pendu(g1.attempts) //Définir la position du pendu en fonction du nombre d'essaies
-			a := remplace_lettre(qz, caché, Lettre_rentrée)
+			a := remplace_lettre(qz, caché, Int_user)
 			l := maj(a)
 			fmt.Println(l)
 			fmt.Println(g)
